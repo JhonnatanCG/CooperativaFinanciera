@@ -1,17 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CooperativaFinanciera.Domain;
 
-public partial class Direccion
+public partial class Direcciones
 {
-    public int DireccionId { get; set; }
 
-    public int ClienteId { get; set; }
+    [Key]
+    public int DireccionID { get; set; }
 
-    public string Descripcion { get; set; } = null!;
+    [Required]
+    public int CodigoCliente { get; set; }
 
-    public string Tipo { get; set; } = null!;
+    [Required]
+    [StringLength(20)]
+    public string? Tipo { get; set; }
+    [Required]
+    [StringLength(100)]
+    public string? Direccion { get; set; }
 
-    public virtual Cliente Cliente { get; set; } = null!;
+    [JsonIgnore]
+    public Cliente? Cliente { get; set; }
 }

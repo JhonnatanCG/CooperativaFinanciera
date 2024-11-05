@@ -1,14 +1,20 @@
-﻿using CooperativaFinanciera.Domain;
-using CooperativaFinanciera.Domain.Dtos;
+﻿using CooperativaFinanciera.Domain.Dtos;
+using CooperativaFinanciera.Domain;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace CooperativaFinanciera.Application.Commands.ClienteNuevo
+namespace CooperativaFinanciera.Application.Commands.UpdateCliente
 {
-    public record ClienteNuevoCommand() : IRequest<bool>
+    public record UpdateClienteCommand() : IRequest<bool>
     {
-        [FromBody]
+        [Required]
+        public int Codigo { get; set; }
+
         [Required]
         [StringLength(2)]
         public string? TipoDocumento { get; set; }
@@ -28,8 +34,7 @@ namespace CooperativaFinanciera.Application.Commands.ClienteNuevo
         public string? Apellido2 { get; set; }
 
         [Required]
-
-        public string? Genero { get; set; } // Usando enum en lugar de lista
+        public string? Genero { get; set; }
 
         [Required]
         public DateTime FechaNacimiento { get; set; }
@@ -39,8 +44,7 @@ namespace CooperativaFinanciera.Application.Commands.ClienteNuevo
         [StringLength(50)]
         public string? Email { get; set; }
 
-
-        public ICollection<Direcciones> Direcciones { get; set; } = new List<Direcciones>();
-        public ICollection<Telefono> Telefonos { get; set; } = new List<Telefono>();
+        public ICollection<Direcciones>? Direcciones { get; set; }
+        public ICollection<Telefono>? Telefonos { get; set; }
     }
 }

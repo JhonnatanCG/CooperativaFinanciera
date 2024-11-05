@@ -16,8 +16,25 @@ namespace CooperativaFinanciera.Domain.Service
         {
             return await _clienteRepository.InsertCliente(cliente);
         }
-        
 
-        
+        public async Task<bool> ExisteClienteConDocumentoAsync(string tipoDocumento, long numeroDocumento)
+        {
+            return await _clienteRepository.ExisteClienteConDocumentoAsync(tipoDocumento, numeroDocumento);
+        }
+
+        public async Task<bool> UpdatCliente(Cliente cliente)
+        {
+            return await _clienteRepository.UpdatCliente(cliente);
+        }
+
+        public async Task<Cliente> ObtenerClientePorIdAsync(int codigo)
+        {
+            var cliente = await _clienteRepository.ObtenerClientePorIdAsync(codigo);
+            return cliente.FirstOrDefault()!;
+
+
+
+
+        }
     }
 }

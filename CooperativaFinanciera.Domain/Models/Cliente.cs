@@ -1,35 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using CooperativaFinanciera.Domain.Dtos;
+using System.ComponentModel.DataAnnotations;
 
 namespace CooperativaFinanciera.Domain;
 
 public partial class Cliente
 {
-    public int ClienteId { get; set; }
+    [Key]
+    public int Codigo { get; set; }
 
-    public byte TipoDocumentoId { get; set; }
+    public string? TipoDocumento { get; set; }
 
     public long NumeroDocumento { get; set; }
 
-    public string Nombres { get; set; } = null!;
+    public string? Nombres { get; set; }
 
-    public string Apellido1 { get; set; } = null!;
+    public string? Apellido1 { get; set; }
 
     public string? Apellido2 { get; set; }
 
-    public string? GeneroId { get; set; }
+    public string? Genero { get; set; }
 
-   
-
-    public DateOnly FechaNacimiento { get; set; }
+    public DateTime FechaNacimiento { get; set; }
 
     public string? Email { get; set; }
 
-    public virtual ICollection<Direccion> Direccions { get; set; } = new List<Direccion>();
-
-    public virtual Genero Genero { get; set; } = null!;
-
-    public virtual ICollection<Telefono> Telefonos { get; set; } = new List<Telefono>();
-
-    public virtual TipoDocumento TipoDocumento { get; set; } = null!;
+    public ICollection<Direcciones> Direcciones { get; set; } = new List<Direcciones>();
+    public ICollection<Telefono> Telefonos { get; set; } = new List<Telefono>();
 }
