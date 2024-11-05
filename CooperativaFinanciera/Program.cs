@@ -1,3 +1,4 @@
+using CooperativaFinanciera.Api.Middleware;
 using CooperativaFinanciera.Domain;
 using CooperativaFinanciera.Domain.Service;
 using CooperativaFinanciera.Infrastructure.Contexts;
@@ -5,6 +6,7 @@ using CooperativaFinanciera.Infrastructure.Domain;
 using CooperativaFinanciera.Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,11 @@ builder.Services.AddDbContext<dbCooperativaContext>(
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
     }
     );
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 //Services
 builder.Services.AddScoped<IClienteService, ClienteService>();
@@ -45,7 +52,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
+app.UseMiddleware<AppExceptionHandlerMiddleware>();
 app.MapControllers();
 
 app.Run();

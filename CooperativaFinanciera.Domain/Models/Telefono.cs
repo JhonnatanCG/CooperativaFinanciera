@@ -1,17 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CooperativaFinanciera.Domain;
 
 public partial class Telefono
 {
-    public int TelefonoId { get; set; }
+    [Key]
+    public int TelefonoID { get; set; }
 
-    public int ClienteId { get; set; }
+    [Required]
+    public int CodigoCliente { get; set; }
 
+    [Required]
+    [StringLength(20)]
+    public string? Tipo { get; set; }
+
+    [Required]
     public long Numero { get; set; }
 
-    public string Tipo { get; set; } = null!;
-
-    public virtual Cliente Cliente { get; set; } = null!;
+    [JsonIgnore]
+    public Cliente? Cliente { get; set; }
 }
