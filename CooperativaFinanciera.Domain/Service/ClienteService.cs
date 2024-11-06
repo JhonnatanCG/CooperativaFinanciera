@@ -1,4 +1,5 @@
-﻿using CooperativaFinanciera.Infrastructure.Domain;
+﻿using CooperativaFinanciera.Domain.Dtos;
+using CooperativaFinanciera.Infrastructure.Domain;
 
 namespace CooperativaFinanciera.Domain.Service
 {
@@ -10,7 +11,6 @@ namespace CooperativaFinanciera.Domain.Service
         {
             _clienteRepository = clienteRepository;
         }
-
 
         public async Task<bool> ClienteNuevo(Cliente cliente)
         {
@@ -32,9 +32,16 @@ namespace CooperativaFinanciera.Domain.Service
             var cliente = await _clienteRepository.ObtenerClientePorIdAsync(codigo);
             return cliente.FirstOrDefault()!;
 
+        }
 
+        public async Task<bool> DeleteCliente(int codigo)
+        {
+            return await _clienteRepository.DeleteCliente(codigo);
+        }
 
-
+        public async Task<IEnumerable<ClienteDto>> ConsultarClientesPorFiltro(ConsultaClienteFiltro filtro)
+        {
+            return await _clienteRepository.ConsultarClientesPorFiltro(filtro);
         }
     }
 }
