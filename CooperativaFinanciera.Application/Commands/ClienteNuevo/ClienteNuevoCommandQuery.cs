@@ -17,7 +17,7 @@ namespace CooperativaFinanciera.Application.Commands.ClienteNuevo
         {
             try
             {
-                if (!Enum.IsDefined(typeof(Generos), request.Genero))
+                if (!Enum.IsDefined(typeof(Generos), request.Genero!))
                 {
                     throw new ArgumentException("El valor del género no es válido. Debe ser 'M' o 'F'.");
                 }
@@ -29,7 +29,8 @@ namespace CooperativaFinanciera.Application.Commands.ClienteNuevo
                     (edad >= 8 && edad <= 17 && request.TipoDocumento != "TI") ||
                     (edad >= 18 && request.TipoDocumento != "CC"))
                 {
-                    throw new Exception("El tipo de documento " + request.TipoDocumento + " no corresponde a la edad del cliente.");
+                    throw new Exception($"El tipo de documento {request.TipoDocumento} no corresponde a la edad del cliente.");
+                    
                 }
 
                 var existeCliente = await _iClienteService.ExisteClienteConDocumentoAsync(

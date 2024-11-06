@@ -1,4 +1,5 @@
 ﻿using CooperativaFinanciera.Domain;
+using CooperativaFinanciera.Domain.Dtos;
 using CooperativaFinanciera.Infrastructure.Contexts;
 using CooperativaFinanciera.Infrastructure.Domain;
 using Microsoft.AspNetCore.Mvc;
@@ -66,28 +67,28 @@ namespace CooperativaFinanciera.Infrastructure.Repository
 
             foreach (var direccion in cliente.Direcciones)
             {
-                if (direccion.DireccionID != 0) 
+                if (direccion.DireccionID != 0)
                 {
-                    
+
                     await _dbCooperativaContext.Direcciones
                         .Where(d => d.DireccionID == direccion.DireccionID)
                         .ExecuteUpdateAsync(setters => setters
                             .SetProperty(d => d.Direccion, direccion.Direccion)
                             .SetProperty(d => d.Tipo, direccion.Tipo));
-                         
+
                 }
                 else
                 {
-                    
+
                     await _dbCooperativaContext.Direcciones.AddAsync(direccion);
                 }
             }
 
             foreach (var telefono in cliente.Telefonos)
             {
-                if (telefono.TelefonoID != 0) 
+                if (telefono.TelefonoID != 0)
                 {
-                    
+
                     await _dbCooperativaContext.Telefonos
                         .Where(t => t.TelefonoID == telefono.TelefonoID)
                         .ExecuteUpdateAsync(setters => setters
@@ -96,7 +97,7 @@ namespace CooperativaFinanciera.Infrastructure.Repository
                 }
                 else
                 {
-               
+
                     await _dbCooperativaContext.Telefonos.AddAsync(telefono);
                 }
             }
@@ -106,29 +107,74 @@ namespace CooperativaFinanciera.Infrastructure.Repository
             return update > 0;
         }
 
-        public async Task<bool> DeleteCliente(long cedula)
+        public async Task<bool> DeleteCliente(int codigo)
         {
-            // Obtiene los registros que coinciden con los criterios
-            var registrosAEliminar = await _dbCooperativaContext.Clientes
-                .Where(e => e.NumeroDocumento == cedula)
-                .ToListAsync();
+            
+            var result = await _dbCooperativaContext.Database
+                .ExecuteSqlRawAsync("EXEC sp_DeleteCliente @Codigo = {0}", codigo);
 
-            if (registrosAEliminar.Any())
-            {
-                
-                _dbCooperativaContext.Clientes.RemoveRange(registrosAEliminar);
-
-                // Guarda los cambios
-                var result = await _dbCooperativaContext.SaveChangesAsync();
-
-                return result > 0;
-            }
-
-            return false;
+           
+            return result < 0;
         }
 
 
+        public async Task<IEnumerable<ClienteDto>> ConsultarClientesPorFiltro(ConsultaClienteFiltro filtro)
+        {
+            var consulta = _dbCooperativaContext.Clientes.AsQueryable();
 
 
+            if (!string.IsNullOrEmpty(filtro.Nombre))
+            {
+                consulta = consulta
+                    .Where(c => (c.Nombres + " " + c.Apellido1 + " " + c.Apellido2).Contains(filtro.Nombre))
+                    .OrderBy(c => c.Nombres);
+            }
+
+
+            if (filtro.NumeroDocumento.HasValue)
+            {
+                consulta = consulta
+                    .Where(c => c.NumeroDocumento == filtro.NumeroDocumento)
+                    .OrderByDescending(c => c.NumeroDocumento);
+            }
+
+
+            if (filtro.FechaInicio.HasValue && filtro.FechaFin.HasValue)
+            {
+                consulta = consulta
+                    .Where(c => c.FechaNacimiento >= filtro.FechaInicio && c.FechaNacimiento <= filtro.FechaFin)
+                    .OrderBy(c => c.FechaNacimiento);
+            }
+
+
+            if (filtro.MasDeUnTelefono)
+            {
+                consulta = consulta
+                    .Where(c => c.Telefonos.Count > 1);
+            }
+
+
+            if (filtro.MasDeUnaDireccion)
+            {
+                consulta = consulta
+                    .Where(c => c.Direcciones.Count > 1);
+            }
+
+
+            return await consulta.Select(c => new ClienteDto
+            {
+                Codigo = c.Codigo,
+                TipoDocumento = c.TipoDocumento,
+                NumeroDocumento = c.NumeroDocumento,
+                NombreCompleto = $"{c.Nombres} {c.Apellido1} {c.Apellido2}",
+                FechaNacimiento = c.FechaNacimiento,
+                NumeroTelefonos = c.Telefonos.Count,
+                PrimeraDireccion = c.Direcciones.FirstOrDefault()!.Direccion
+            }).ToListAsync();
+
+
+
+
+        }
     }
 }
