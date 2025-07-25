@@ -1,0 +1,157 @@
+# Pipeline Completo para Pruebas de Rendimiento de SISDEP
+# Se ejecuta en la rama 'main' y está organizado por módulos.
+
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+# ===================================================================
+# == VARIABLES CENTRALES PARA TODAS LAS PRUEBAS ==
+# == Modifica estos valores para ajustar la carga de todas las pruebas ==
+# ===================================================================
+variables:
+  # Parámetros de Pruebas de Carga (Load)
+  LOAD_USERS: 80
+  LOAD_DURATION: 3600 # 1 hora
+
+  # Parámetros de Pruebas de Estrés (Stress)
+  STRESS_TARGET_CONCURRENCY: 200
+  STRESS_RAMP_UP_TIME: 300 # 5 minutos
+  STRESS_RAMP_UP_STEPS: 10
+  STRESS_HOLD_TIME: 60 # 1 minuto
+
+  # Parámetros de Pruebas de Picos (Spike)
+  SPIKE_BASE_USERS: 40
+  SPIKE_USERS: 80
+  SPIKE_BASE_DURATION: 3600 # 1 hora
+  SPIKE_DELAY: 300 # 5 minutos
+  SPIKE_DURATION: 600 # 10 minutos
+
+  # Parámetros de Pruebas de Resistencia (Endurance)
+  ENDURANCE_USERS: 60
+  ENDURANCE_DURATION: 28800 # 8 horas
+
+# ===================================================================
+# == JOBS DE EJECUCIÓN (UNO POR CADA MÓDULO) ==
+# ===================================================================
+jobs:
+- job: Pruebas_Bodegas
+  displayName: 'Pruebas de Rendimiento - Módulo Bodegas'
+  steps:
+  - task: ApacheJMeter@1
+    displayName: 'Carga - Bodegas'
+    inputs:
+      jmeterTestFile: 'tests/01.Gestion Bodegas/Carga_Modulo_Bodegas.jmx'
+      jmeterRunLog: 'results/bodegas_carga.jtl'
+      jmeterProperties: >
+        -JThreadGroup.num_threads=$(LOAD_USERS)
+        -Jprop.duration=$(LOAD_DURATION)
+
+  - task: ApacheJMeter@1
+    displayName: 'Estrés - Bodegas'
+    inputs:
+      jmeterTestFile: 'tests/01.Gestion Bodegas/Estres_Modulo_Bodegas.jmx'
+      jmeterRunLog: 'results/bodegas_estres.jtl'
+      jmeterProperties: >
+        -Jprop.targetConcurrency=$(STRESS_TARGET_CONCURRENCY)
+        -Jprop.rampUpTime=$(STRESS_RAMP_UP_TIME)
+        -Jprop.rampUpSteps=$(STRESS_RAMP_UP_STEPS)
+        -Jprop.holdTime=$(STRESS_HOLD_TIME)
+
+  - task: ApacheJMeter@1
+    displayName: 'Picos - Bodegas'
+    inputs:
+      jmeterTestFile: 'tests/01.Gestion Bodegas/Picos_Modulo_Bodegas.jmx'
+      jmeterRunLog: 'results/bodegas_picos.jtl'
+      jmeterProperties: >
+        -JTG_Carga_Base.num_threads=$(SPIKE_BASE_USERS)
+        -JTG_Pico_Bodegas.num_threads=$(SPIKE_USERS)
+        -Jprop.baseDuration=$(SPIKE_BASE_DURATION)
+        -Jprop.spikeDuration=$(SPIKE_DURATION)
+        -JTG_Pico_Bodegas.delay=$(SPIKE_DELAY)
+        
+  - task: ApacheJMeter@1
+    displayName: 'Resistencia - Bodegas'
+    inputs:
+      jmeterTestFile: 'tests/01.Gestion Bodegas/Resistencia_Modulo_Bodegas.jmx'
+      jmeterRunLog: 'results/bodegas_resistencia.jtl'
+      jmeterProperties: >
+        -JThreadGroup.num_threads=$(ENDURANCE_USERS)
+        -JThreadGroup.duration=$(ENDURANCE_DURATION)
+
+- job: Pruebas_Regulaciones
+  displayName: 'Pruebas de Rendimiento - Módulo Regulaciones'
+  steps:
+  - task: ApacheJMeter@1
+    displayName: 'Carga - Regulaciones'
+    inputs:
+      jmeterTestFile: 'tests/02.Regulaciones/Carga_Modulo_Regulaciones.jmx'
+      jmeterRunLog: 'results/regulaciones_carga.jtl'
+      jmeterProperties: >
+        -JThreadGroup.num_threads=$(LOAD_USERS)
+        -Jprop.duration=$(LOAD_DURATION)
+
+  # ... (Aquí irían las tareas de Estrés, Picos y Resistencia para Regulaciones, siguiendo el mismo patrón) ...
+
+- job: Pruebas_Operativa
+  displayName: 'Pruebas de Rendimiento - Módulo Operativa'
+  steps:
+  - task: ApacheJMeter@1
+    displayName: 'Carga - Operativa'
+    inputs:
+      jmeterTestFile: 'tests/03.Operativa/Carga_Modulo_Operativa.jmx'
+      jmeterRunLog: 'results/operativa_carga.jtl'
+      jmeterProperties: >
+        -JThreadGroup.num_threads=$(LOAD_USERS)
+        -Jprop.duration=$(LOAD_DURATION)
+
+  # ... (Aquí irían las tareas de Estrés, Picos y Resistencia para Operativa, siguiendo el mismo patrón) ...
+
+- job: Pruebas_Social
+  displayName: 'Pruebas de Rendimiento - Módulo Social'
+  steps:
+  - task: ApacheJMeter@1
+    displayName: 'Carga - Social'
+    inputs:
+      jmeterTestFile: 'tests/04.Social/Carga_Modulo_Social.jmx'
+      jmeterRunLog: 'results/social_carga.jtl'
+      jmeterProperties: >
+        -JThreadGroup.num_threads=$(LOAD_USERS)
+        -Jprop.duration=$(LOAD_DURATION)
+
+  # ... (Aquí irían las tareas de Estrés, Picos y Resistencia para Social, siguiendo el mismo patrón) ...
+
+- job: Publicar_Resultados
+  displayName: 'Publicar Resultados y Dashboards'
+  dependsOn: # Este job solo se ejecuta después de que los otros terminen
+  - Pruebas_Bodegas
+  - Pruebas_Regulaciones
+  - Pruebas_Operativa
+  - Pruebas_Social
+  condition: succeededOrFailed() # Se ejecuta incluso si alguna de las pruebas falló
+  steps:
+  # Genera todos los dashboards
+  - task: ApacheJMeter@1
+    displayName: 'Generar Dashboards'
+    inputs:
+      jmeterVersion: '5.6.3'
+      jmeterRunLog: 'results/ # Directorio de entrada para los JTL'
+      generateReport: true # Le dice a la tarea que solo genere el reporte
+      reportLocation: 'report/'
+
+  # Publica los resultados en la pestaña de Pruebas
+  - task: PublishTestResults@2
+    displayName: 'Publicar Resultados JTL'
+    inputs:
+      testResultsFormat: 'JMeter'
+      testResultsFiles: 'results/**/*.jtl' # Publica todos los archivos .jtl
+
+  # Publica la carpeta de dashboards como un artefacto descargable
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publicar Dashboards HTML'
+    inputs:
+      targetPath: '$(System.DefaultWorkingDirectory)/report'
+      artifact: 'DashboardsHTML'
+      publishLocation: 'Container'
